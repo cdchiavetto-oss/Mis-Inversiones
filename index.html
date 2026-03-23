@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inversiones — Cristian Chiavetto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #080f0a;
+      --bg2: #0d1a0f;
+      --bg3: #112214;
+      --green: #00e676;
+      --green-dim: rgba(0, 230, 118, 0.12);
+      --green-glow: rgba(0, 230, 118, 0.25);
+      --green-mid: #00b85a;
+      --text: #e8f5e9;
+      --text-muted: rgba(232, 245, 233, 0.45);
+      --border: rgba(0, 230, 118, 0.15);
+      --border-bright: rgba(0, 230, 118, 0.35);
+      --dollar: #64b5f6;
+      --dollar-dim: rgba(100, 181, 246, 0.1);
+    }
+
+    html, body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Fondo con grid */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,230,118,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,230,118,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Orbe de luz */
+    body::after {
+      content: "";
+      position: fixed;
+      top: -20%; left: -10%;
+      width: 55vw; height: 55vw;
+      background: radial-gradient(ellipse, rgba(0,230,118,0.06) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 40px 120px;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 56px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.1s forwards;
+    }
+
+    .header-left .label {
+      font-family: "Space Mono", monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 10px;
+    }
+
+    .header-left h1 {
+      font-family: "DM Sans", sans-serif;
+      font-weight: 600;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      line-height: 1.1;
+      color: var(--text);
+    }
+
+    .header-left h1 span {
+      color: var(--green);
+    }
+
+    .header-right {
+      text-align: right;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: "Space Mono", monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--green);
+      border: 1px solid var(--border-bright);
+      background: var(--green-dim);
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .update-date {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+      font-family: "Space Mono", monospace;
+    }
+
+    /* RESUMEN TOTAL */
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.25s forwards;
+    }
+
+    .summary-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+    }
+
+    .summary-card .s-label {
+      font-family: "Space Mono", monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .summary-card .s-value {
+      font-family: "Space Mono", monospace;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .summary-card .s-value.dollar {
+      color: var(--dollar);
+    }
+
+    .summary-card .s-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* SECCIÓN PLATAFORMA */
+    .platform-section {
+      margin-bottom: 40px;
+      opacity: 0;
+    }
+
+    .platform-section:nth-child(1) { animation: fadeUp 0.8s ease 0.35s forwards; }
+    .platform-section:nth-child(2) { animation: fadeUp 0.8s ease 0.5s forwards; }
+
+    .platform-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .platform-name {
+      font-family: "Space Mono", monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .platform-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* CARDS */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .fund-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.3s;
+      cursor: default;
+    }
+
+    .fund-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--green), transparent);
+      opacity: 0.6;
+    }
+
+    .fund-card.dollar-card::before {
+      background: linear-gradient(90deg, var(--dollar), transparent);
+    }
+
+    .fund-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-3px);
+    }
+
+    .fund-card .card-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: "Space Mono", monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+
+    .tag-dollar {
+      background: var(--dollar-dim);
+      color: var(--dollar);
+      border: 1px solid rgba(100,181,246,0.25);
+    }
+
+    .tag-green {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid var(--border);
+    }
+
+    .fund-card .fund-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 20px;
+      min-height: 2.8em;
+    }
+
+    .fund-card .fund-name em {
+      font-style: normal;
+      color: var(--green);
+    }
+
+    .fund-card.dollar-card .fund-name em {
+      color: var(--dollar);
+    }
+
+    .fund-data {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .fund-data-item .d-label {
+      font-family: "Space Mono", monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .fund-data-item .d-value {
+      font-family: "Space Mono", monospace;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .fund-data-item .d-value.positive {
+      color: var(--green);
+    }
+
+    .fund-data-item .d-value.dollar-val {
+      color: var(--dollar);
+    }
+
+    .fund-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .fund-footer .f-platform {
+      font-family: "Space Mono", monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .fund-footer .f-date {
+      font-family: "Space Mono", monospace;
+      font-size: 0.58rem;
+      color: var(--text-muted);
+    }
+
+    /* NOTA EDITABLE */
+    .edit-note {
+      margin-top: 48px;
+      padding: 18px 24px;
+      background: var(--bg2);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      font-family: "Space Mono", monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.7s forwards;
+    }
+
+    .edit-note span { color: var(--green); }
+
+    /* FOOTER */
+    footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 12px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      background: rgba(8, 15, 10, 0.88);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+      font-family: "Space Mono", monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0;
+      animation: fadeUp 0.7s ease 0.8s forwards;
+    }
+
+    footer span { color: var(--green); }
+
+    /* ANIMACIONES */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 700px) {
+      .wrapper { padding: 40px 20px 100px; }
+      .summary { grid-template-columns: 1fr; }
+      header { flex-direction: column; gap: 16px; }
+      .header-right { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <!-- HEADER -->
+    <header>
+      <div class="header-left">
+        <p class="label">Portfolio de inversiones</p>
+        <h1>Mis <span>Fondos</span><br>de Inversión</h1>
+      </div>
+      <div class="header-right">
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          Activo
+        </div>
+        <p class="update-date">Última actualización: Jun 2025</p>
+      </div>
+    </header>
+
+    <!-- RESUMEN -->
+    <div class="summary">
+      <div class="summary-card">
+        <p class="s-label">Total fondos</p>
+        <p class="s-value">3</p>
+        <p class="s-sub">FCI activos</p>
+      </div>
+      <div class="summary-card">
+        <p class="s-label">Plataformas</p>
+        <p class="s-value">2</p>
+        <p class="s-sub">Cocos · Balanz</p>
+      </div>
+      <div class="summary-card">
+        <p class="s-label">Moneda</p>
+        <p class="s-value dollar">USD</p>
+        <p class="s-sub">Dólar linked</p>
+      </div>
+    </div>
+
+    <!-- COCOS -->
+    <div class="platform-section">
+      <div class="platform-header">
+        <span class="platform-name">Cocos Capital</span>
+        <div class="platform-line"></div>
+      </div>
+      <div class="cards-grid">
+
+        <div class="fund-card dollar-card">
+          <span class="card-tag tag-dollar">💲 Dólar Plus</span>
+          <p class="fund-name">FONDOS COCOS<br><em>Dólares Plus</em></p>
+          <div class="fund-data">
+            <div class="fund-data-item">
+              <p class="d-label">Invertido</p>
+              <p class="d-value dollar-val">— USD</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Rendimiento</p>
+              <p class="d-value positive">+— %</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Variación</p>
+              <p class="d-value positive">+— %</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Valuación</p>
+              <p class="d-value dollar-val">— USD</p>
+            </div>
+          </div>
+          <div class="fund-footer">
+            <span class="f-platform">Cocos Capital</span>
+            <span class="f-date">Compra: —/—/——</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BALANZ -->
+    <div class="platform-section">
+      <div class="platform-header">
+        <span class="platform-name">Balanz</span>
+        <div class="platform-line"></div>
+      </div>
+      <div class="cards-grid">
+
+        <!-- Fondo 1 Balanz -->
+        <div class="fund-card dollar-card">
+          <span class="card-tag tag-dollar">💲 Corporativo</span>
+          <p class="fund-name">FCI BALANZ<br><em>Ahusda Corporativo Clase A</em></p>
+          <div class="fund-data">
+            <div class="fund-data-item">
+              <p class="d-label">Invertido</p>
+              <p class="d-value dollar-val">— USD</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Rendimiento</p>
+              <p class="d-value positive">+— %</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Variación</p>
+              <p class="d-value positive">+— %</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Valuación</p>
+              <p class="d-value dollar-val">— USD</p>
+            </div>
+          </div>
+          <div class="fund-footer">
+            <span class="f-platform">Balanz</span>
+            <span class="f-date">Compra: —/—/——</span>
+          </div>
+        </div>
+
+        <!-- Fondo 2 Balanz -->
+        <div class="fund-card dollar-card">
+          <span class="card-tag tag-dollar">💲 Corto Plazo</span>
+          <p class="fund-name">ESTRA1A<br><em>Dólar Corto Plazo Clase A</em></p>
+          <div class="fund-data">
+            <div class="fund-data-item">
+              <p class="d-label">Invertido</p>
+              <p class="d-value dollar-val">— USD</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Rendimiento</p>
+              <p class="d-value positive">+— %</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Variación</p>
+              <p class="d-value positive">+— %</p>
+            </div>
+            <div class="fund-data-item">
+              <p class="d-label">Valuación</p>
+              <p class="d-value dollar-val">— USD</p>
+            </div>
+          </div>
+          <div class="fund-footer">
+            <span class="f-platform">Balanz</span>
+            <span class="f-date">Compra: —/—/——</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- NOTA -->
+    <div class="edit-note">
+      📝 <span>Nota:</span> Completá los campos marcados con — con tus datos reales (montos, fechas y rendimientos).
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>Cristian Chiavetto &mdash; <span>Inversiones 2025</span></span>
+    <span>3 fondos activos · USD</span>
+  </footer>
+
+</body>
+</html>
